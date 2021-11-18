@@ -1,0 +1,94 @@
+---
+title: "SVD image compression"
+author: "Andrés Mejía Rodríguez"
+date: "11/8/2021"
+output:
+  html_document: default
+  pdf_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(dplyr)
+library(magrittr)
+```
+
+## Introduction
+
+In the following work we will explore how does compressing an image using SVD works. For this we will take an image and see how different compression work and how big the compression ratios are.
+
+## Original Image
+
+![](blip2.jpg "Blip")
+
+This work will be based on the above image. The picture is 654X650. We can also check that it is a full rank matrix (650) in all 3 color spaces using the rank command in matlab. So the original image needs
+
+```{r}
+650*654*3
+```
+
+Different numbers for storing the whole image.
+
+
+## Compression Information
+
+For getting the low rank compression we will use the "compress.m" file modified (included in the folder) to export the image files and find the rank of the resulting matrices.
+
+Given that in a compressed Matrix of rank k
+
+$$
+A_k=\sum_{i=1}^k\sigma_i \vec{u_k}\vec{v_k}^t
+$$
+
+holds 1 item of information in $\sigma_i$, items equal to the vertical size in $\vec{u_i}$ and items equal to the horizontal size in $\vec{v_i}$. Also note that this has to be done for all 3 colors so in total we need
+
+$$
+(650+654+1)3k
+$$
+
+And we get a compression equivalent to
+
+$$
+\frac{(650+654+1)3k}{650*654*3}
+$$
+We can see a few select values in the following table.
+
+
+
+```{r}
+V=data.frame(rank=c(1,2,10,40,100,325,650))
+V %<>% mutate(comp_data=(650+654+1)*3*rank,comp_rate=comp_data/(650*654*3))
+V
+```
+
+Note that when using half the rank uses almost the same information than the image itself and using the full rank uses almost twice as much as the original image.
+
+## Image comparision
+
+The following shows the results of compressing the image using the first 40 SVD
+
+
+![](ani.gif "Blip animada")
+
+
+We can see that we mostly get a recognizable picture but lose detail for example in the front paws.
+
+
+Using 100 rank we get the following picture:
+
+![](blipf100.jpg "Blip 100")
+
+The author cannot appreciate any difference between this picture and the original one.
+
+
+![](blipf325.jpg "Blip 325")
+
+
+As above the author cannot appreciate any difference between this picture and the original one. note that this image uses almost the same amount of information than the original one.
+
+
+## Final Thoughts
+
+The image compression when used on a image has to have a rounding effect due to the numbers used need to be integers. When checking the rounded matrices for their rank the rounding process makes them behave like full rank matrices, however checking the unrounded matrices gives the expected results.
+
+I seems that a 30% compression is a sweet spot between an almost identical image and small information size. 
